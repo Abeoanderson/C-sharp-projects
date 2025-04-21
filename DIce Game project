@@ -1,0 +1,169 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+
+class Dice
+{
+    private int numSides;
+    public int Result { get; private set; }
+    public int NumSides => numSides;
+
+    private static Random rand = new Random();
+
+    public Dice(int sides)
+    {
+        numSides = sides;
+    }
+
+    public void Roll()
+    {
+        Result = rand.Next(1, numSides + 1);
+    }
+}
+
+class DiceRoller
+{
+    private List<Dice> history = new List<Dice>();
+
+    public void RollDice(int sides, int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            Dice die = new Dice(sides);
+            die.Roll();
+            history.Add(die);
+            Console.WriteLine($" Die {i + 1}: You rolled a {die.Result} on a d{die.NumSides}");
+        }
+    }
+
+    public void ShowHistory()
+    {
+        if (history.Count == 0)
+        {
+            Console.WriteLine("No rolls yet!");
+            return;
+        }
+
+        Console.WriteLine("\n| # | Sides | Result |");
+        Console.WriteLine("|---|-------|--------|");
+
+        for (int i = 0; i < history.Count; i++)
+        {
+            Console.WriteLine($"| {i + 1,2} | {history[i].NumSides,5} | {history[i].Result,6} |");
+        }
+    }
+
+    public void ShowStats()
+    {
+        if (history.Count == 0)
+        {
+            Console.WriteLine("No stats to show.");
+            return;
+        }
+
+        int total = history.Sum(d => d.Result);
+        double average = history.Average(d => d.Result);
+        int max = history.Max(d => d.Result);
+        int min = history.Min(d => d.Result);
+
+        Console.WriteLine("\n Statistics:");
+        Console.WriteLine($"Total rolls: {history.Count}");
+        Console.WriteLine($"Sum of rolls: {total}");
+        Console.WriteLine($"Average roll: {average:F2}");
+        Console.WriteLine($"Highest roll: {max}");
+        Console.WriteLine($"Lowest roll: {min}");
+    }
+
+    public void SaveToFile(string filename)
+    {
+        var lines = new List<string>
+        {
+            "| # | Sides | Result |",
+            "|---|-------|--------|"
+        };
+
+        for (int i = 0; i < history.Count; i++)
+        {
+            lines.Add($"| {i + 1,2} | {history[i].NumSides,5} | {history[i].Result,6} |");
+        }
+
+        File.WriteAllLines(filename, lines);
+        Console.WriteLine($"Saved roll history to '{filename}'");
+    }
+}
+
+class Program
+{
+    static void Main()
+    {
+        DiceRoller roller = new DiceRoller();
+
+        while (true)
+        {
+            Console.WriteLine("\nDice Roller Menu:");
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("[1] Roll Dice");
+            Console.ForegroundColor = ConsoleColor.DarkMagenta;
+            Console.WriteLine("[2] Show Roll History");
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("[3] Show Statistics");
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("[4] Save History to File");
+            Console.ForegroundColor = ConsoleColor.Blue;
+            Console.WriteLine("[5] Exit");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+
+            Console.Write("\nSelect an option: ");
+            string choice = Console.ReadLine().Trim();
+
+            switch (choice)
+            {
+                case "1":
+                    try
+                    {
+                        while (true) 
+                        {
+                            Console.Write("Enter number of sides (e.g., 6): ");
+                            int sides = int.Parse(Console.ReadLine());
+                            Console.Write("How many dice to roll? ");
+                            int count = int.Parse(Console.ReadLine());
+                            if (sides < 101 && count < 101) {
+                                roller.RollDice(sides, count);
+                                break;
+                            } else {
+                                Console.WriteLine("Please enter smaller numbers (sides <= 100) (count <= 100)");
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        Console.WriteLine("invalid input. Try again.");
+                    }
+                    break;
+
+                case "2":
+                    roller.ShowHistory();
+                    break;
+
+                case "3":
+                    roller.ShowStats();
+                    break;
+
+                case "4":
+                    Console.Write("Enter filename to save to (e.g., rolls.txt): ");
+                    string filename = Console.ReadLine().Trim();
+                    roller.SaveToFile(filename);
+                    break;
+
+                case "5":
+                    Console.WriteLine("Goodbye!");
+                    return;
+
+                default:
+                    Console.WriteLine("invalid option. Try again.");
+                    break;
+            }
+        }
+    }
+}
